@@ -43,12 +43,12 @@ if ($num -le 0) {
 Write-Host "There are $num files."
 [uint16]$start = Read-Host -Prompt "Please insert first video number (1-$num)"
 while (($start -lt 1) -or ($start -gt $num)) {
-    $start = Read-Host -Prompt "Invalid start. Please insert first video number (1-$num)"
+    [uint16]$start = Read-Host -Prompt "Invalid start. Please insert first video number (1-$num)"
 }
 
 [uint16]$end = Read-Host -Prompt "Please insert last video number ($start-$num)"
 while (($end -lt $start) -or ($end -gt $num)) {
-    $end = Read-Host -Prompt "Invalid end. Please insert last video number ($start-$num)"
+    [uint16]$end = Read-Host -Prompt "Invalid end. Please insert last video number ($start-$num)"
 }
 
 # Trim links list
