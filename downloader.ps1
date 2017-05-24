@@ -2,7 +2,7 @@ $server="https://video.technion.ac.il" # Technion video server
 
 $progressPreference = 'silentlyContinue' # For wget not to bother the user (similar to wget -q)
 
-Write-Output "Old Technion Video Server Downloader v0.3 by Ran Lottem"
+Write-Output "Old Technion Video Server Downloader v0.4.4 by Ran Lottem"
 Write-Output "Based on bash script by Ohad Eytan"
 
 # Check dependency
@@ -29,7 +29,8 @@ if (-not $?) {
 }
 
 # Get links and amount of links
-$links = $URL.Links | Select-Object href | grep -a movies/rtsp
+#$links = $URL.Links | Select-Object href | grep -a movies/rtsp
+$links = $URL.Links | Select-Object href | Select-String movies/rtsp
 $num = ($links | Measure-Object).count
 
 # Check amount
@@ -40,12 +41,12 @@ if ($num -le 0) {
 
 # Get file range for download
 Write-Host "There are $num files."
-$start = Read-Host -Prompt "Please insert first video number (1-$num)"
+[uint16]$start = Read-Host -Prompt "Please insert first video number (1-$num)"
 while (($start -lt 1) -or ($start -gt $num)) {
     $start = Read-Host -Prompt "Invalid start. Please insert first video number (1-$num)"
 }
 
-$end = Read-Host -Prompt "Please insert last video number ($start-$num)"
+[uint16]$end = Read-Host -Prompt "Please insert last video number ($start-$num)"
 while (($end -lt $start) -or ($end -gt $num)) {
     $end = Read-Host -Prompt "Invalid end. Please insert last video number ($start-$num)"
 }
@@ -55,11 +56,20 @@ $links = $links | Select-Object -Skip ($start-1) | Select-Object -SkipLast ($num
 
 # Let's rock!
 foreach ($line in $links) {
+    # echo line is $line
+    # echo line.Line is $line.Line
+    $line = $line.Line.trimstart("@{href=").trim("}")
+    # echo new line is $line
 	$filename = $line.split("/")[5]
+    # echo filename is $filename
     $filename = $filename.Trim() # filename for saving
+    # echo trimmed filename is $filename
     # TODO: Check if file exists, skip it
     $file2 = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
-	$address = ($file2.Content | grep -a window.location=).split("`"")[1]
+    # echo file2 is $file2.Content > log.txt
+    # $address = ($file2.Content | grep -a window.location=).split("`"")[1]
+    $address = ($file2.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
+    # echo address is $address
     cmd /c .\msdl.exe -s2 $address -o $filename '2>&1' | ForEach-Object {
         $first=1
         $newline=0
