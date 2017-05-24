@@ -24,7 +24,7 @@ $URL = Invoke-WebRequest $Course -Method POST -Body $params
 
 # Check URL
 if (-not $?) {
-	Write-Output "Error: please provide course page link. (e.g http://video.technion.ac.il/Courses/PhysMech.html)"
+	Write-Output "Error: Bad URL, username, or password"
 	exit
 }
 
@@ -56,20 +56,11 @@ $links = $links | Select-Object -Skip ($start-1) | Select-Object -SkipLast ($num
 
 # Let's rock!
 foreach ($line in $links) {
-    # echo line is $line
-    # echo line.Line is $line.Line
     $line = $line.Line.trimstart("@{href=").trim("}")
-    # echo new line is $line
 	$filename = $line.split("/")[5]
-    # echo filename is $filename
     $filename = $filename.Trim() # filename for saving
-    # echo trimmed filename is $filename
-    # TODO: Check if file exists, skip it
     $file2 = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
-    # echo file2 is $file2.Content > log.txt
-    # $address = ($file2.Content | grep -a window.location=).split("`"")[1]
     $address = ($file2.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
-    # echo address is $address
     cmd /c .\msdl.exe -s2 $address -o $filename '2>&1' | ForEach-Object {
         $first=1
         $newline=0
