@@ -36,4 +36,4 @@ link: https://gallery.technet.microsoft.com/PS2EXE-GUI-Convert-e7cb69d5
 
 Cygwin:
 
-version (uname -a): CYGWIN_NT-10.0 DESKTOP-907D4D2 2.8.0(0.309/5/3) 2017-04-01 20:47 x86_64 Cygwin
+version (uname -a): CYGWIN_NT-10.0 {My computer name} 2.8.0(0.309/5/3) 2017-04-01 20:47 x86_64 Cygwin
