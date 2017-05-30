@@ -15,9 +15,10 @@ http://video.technion.ac.il/Courses/
 
 This script uses msdl, compiled for windows by me, supplied here as an exe file, which also requires cygwin1.dll to be present in the same folder. This DLL file is provided inside a ZIP file, which needs to be extracted to the same folder as msdl.exe, and downloader.exe (or downloader.ps1, if you want to use the script directly).
 
-The PS1 script is then compiled with PS2EXE-GUI (https://gallery.technet.microsoft.com/PS2EXE-GUI-Convert-e7cb69d5) created initially by Ingo Karstein and improved upon (including PS 5.0 support) by Markus Scholtes.
+The PS1 script is then compiled with PS2EXE-GUI created initially by Ingo Karstein and improved upon (including PS 5.0 support) by Markus Scholtes.
 
 Version summary:
+
 MSDL:
 
 version: 1.2.7-r2
