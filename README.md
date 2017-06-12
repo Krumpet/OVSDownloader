@@ -5,6 +5,7 @@
  2) Extract cygwin1.dll to get cygwin1.dll
  3) Both exe files and the dll file should now be in the same folder
  4) Run downloader.exe and follow the instructions
+ 5) For known errors see bottom of the document, please let me know of others you encounter
 
 ---------
 README.MD
@@ -38,3 +39,14 @@ link: https://gallery.technet.microsoft.com/PS2EXE-GUI-Convert-e7cb69d5
 Cygwin:
 
 version (uname -a): CYGWIN_NT-10.0 {My computer name} 2.8.0(0.309/5/3) 2017-04-01 20:47 x86_64 Cygwin
+
+---------
+KNOWN ERRORS
+---------
+* Error when running downloader.exe:
+'Unhandled Exception: System.IO.FileNotFoundException: Could not load file or assembly 'System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35' or one of its dependencies. The system cannot find the file specified.
+at ik.PowerShell.PS2EXE.Main(String[] args)'
+
+This has something to do with Windows Management Framework 3.0, please go here: https://www.microsoft.com/en-us/download/details.aspx?id=34595 and download the appropriate file for your OS (either 32 or 64-bit, and 6.0 for Vista, 6.1 for Win7).
+
+Retry downloader.exe after installing the above.
