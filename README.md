@@ -47,6 +47,6 @@ KNOWN ERRORS
 'Unhandled Exception: System.IO.FileNotFoundException: Could not load file or assembly 'System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35' or one of its dependencies. The system cannot find the file specified.
 at ik.PowerShell.PS2EXE.Main(String[] args)'
 
-This has something to do with Windows Management Framework 3.0, please go here: https://www.microsoft.com/en-us/download/details.aspx?id=34595 and download the appropriate file for your OS (either 32 or 64-bit, and 6.0 for Vista, 6.1 for Win7).
+This has something to do with Windows Management Framework, please download the latest version from Microsoft. Version 5.1 is here: https://www.microsoft.com/en-us/download/details.aspx?id=54616
 
 Retry downloader.exe after installing the above.
