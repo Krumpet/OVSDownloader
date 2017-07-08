@@ -71,14 +71,10 @@ function readDefault ([string]$prompt, $default) {
 
 function getPath {
     $pathPrompt = "Please enter directory (e.g. `"C:\my_vids`")"
-    # $dir = Read-Host $pathPrompt
-    # $dir = ($defaultDir, $dir)[[bool]$dir]
     $dir = readDefault $pathPrompt (forceResolvePath $defaultDir)
     while (($dir.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -ne -1)`
             -or ((test-path -Path $dir) -and (-not (test-path -Path $dir -PathType Container)))) {
         $dir = readDefault $pathPrompt (forceResolvePath $defaultDir)
-        # $dir = Read-Host "Invalid directory name.`n$pathPrompt"
-        # $dir = ($defaultDir, $dir)[[bool]$dir]
     }
     return forceResolvePath $dir
 }
@@ -88,7 +84,6 @@ function getCourse {
     $Course = Read-Host -Prompt $coursePrompt
     Invoke-WebRequest $Course | Out-Null
     while (-not $?) {
-        #Write-Host "Invalid url."
         $Course = Read-Host -Prompt "Invalid URL.`n$coursePrompt"
         Invoke-WebRequest $Course | Out-Null
     }
@@ -183,11 +178,9 @@ function getRange ([int]$num) {
 function getInRange ([int]$low = 1, [int]$high, [int]$def) {
     $prompt = "Please choose video number ($low-$high)"
     [int]$res = readDefault $prompt $def
-    #Read-Host -Prompt $prompt
     while (($res -lt $low) -or ($res -gt $high)) {
         Write-Host "Invalid choice."
         [int]$res = readDefault $prompt $def
-        #Read-Host -Prompt $prompt
     }
     return [int]$res
 }
