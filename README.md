@@ -8,6 +8,8 @@
  5) Run downloader.exe and follow the instructions
  6) For known errors see bottom of the document, please let me know of others you encounter
 
+To download from the *new* server (Panopto), use https://github.com/urielha/Video.Technion
+
 ---------
 README.MD
 ---------
