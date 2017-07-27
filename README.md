@@ -1,12 +1,14 @@
 ﻿# OVSDownloader
  
  TL;DR:
- 1) Go to https://github.com/Krumpet/OVSDownloader/releases and download OVSdownloader.zip
+ 1) Go to https://github.com/Krumpet/OVSDownloader/releases and download OVSdownloader.zip, or just download it from above.
  2) Extract msdl.exe, downloader.exe, and cygwin1.zip
  3) Extract cygwin1.zip to get cygwin1.dll
  4) Both exe files and the dll file should now be in the same folder
  5) Run downloader.exe and follow the instructions
  6) For known errors see bottom of the document, please let me know of others you encounter
+
+To download from the *new* server (Panopto), use https://github.com/urielha/Video.Technion
 
 ---------
 README.MD
