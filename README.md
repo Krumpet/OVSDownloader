@@ -16,7 +16,7 @@ README.MD
 This is a Powershell script that can be used to download .wmv files via the RTSP protocol from the Old Technion Video Server at:
 http://video.technion.ac.il/Courses/
 
-This script uses msdl, compiled for windows by me, supplied here as an exe file, which also requires cygwin1.dll to be present in the same folder. This DLL file is provided inside a ZIP file, which needs to be extracted to the same folder as msdl.exe, and downloader.exe (or downloader.ps1, if you want to use the script directly).
+This script uses msdl, compiled for windows by me, supplied here as an exe file, which also requires cygwin1.dll to be present in the same folder.
 
 The PS1 script is then compiled with PS2EXE-GUI created initially by Ingo Karstein and improved upon (including PS 5.0 support) by Markus Scholtes.
 
