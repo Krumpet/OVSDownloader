@@ -10,7 +10,7 @@ function main {
     testMSDL # Check dependency
     $params = getCred # Get user credentials
     $Course = getCourse # Get Course address
-    $links = getLinks $Course # Get links
+    $links = getLinks $Course $params # Get links
     $num = ($links | Measure-Object).count # Get amount of links
     $range = getRange $num # Get range of downloads
     $links = $links | Select-Object -Skip ($range[0] - 1) | Select-Object -SkipLast ($num - $range[1]) # Trim links list
@@ -143,7 +143,7 @@ function testMSDL {
     }
 }
 
-function getLinks ($Course) {
+function getLinks ($Course, $params) {
     $URL = Invoke-WebRequest $Course -Method POST -Body $params
 
     # Check URL
