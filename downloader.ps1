@@ -122,7 +122,7 @@ function getCred {
         # Get user input
         Write-Host "params.txt not found. It will be created from your username & password."
         $User = Read-Host -Prompt "Please insert username (e.g ran.lottem without @campus etc.)"
-        $Pass = Read-Host -Prompt "Please insert password"
+        $Pass = Read-Host -assecurestring -Prompt "Please insert password" | ConvertFrom-SecureString
         Add-Content ".\params.txt" "username = $User"
         Add-Content ".\params.txt" "password = $Pass"
     }
@@ -130,7 +130,15 @@ function getCred {
         # param.txt exists
         Write-Host "Loading username & password from params.txt"
     }
-    return Get-Content -Raw ".\params.txt" | ConvertFrom-StringData
+    $hash = Get-Content -Raw ".\params.txt" | ConvertFrom-StringData
+    $securePass = ConvertTo-SecureString -String $hash["password"]
+    $hash["password"] =  getRawPassword $securePass
+    return $hash
+}
+
+function getRawPassword ($SecurePassword) {
+	$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
+	return  [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 }
 
 function testMSDL {
