@@ -132,13 +132,15 @@ function getCred {
     }
     $hash = Get-Content -Raw ".\params.txt" | ConvertFrom-StringData
     $securePass = ConvertTo-SecureString -String $hash["password"]
-    $hash["password"] =  getRawPassword $securePass
+    $hash["password"] = getRawPassword $securePass
     return $hash
 }
 
 function getRawPassword ($SecurePassword) {
-	$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
-	return  [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
+    $pass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+	return $pass
 }
 
 function testMSDL {
