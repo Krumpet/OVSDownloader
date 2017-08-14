@@ -16,16 +16,26 @@ function main {
     $links = $links | Select-Object -Skip ($range[0] - 1) | Select-Object -SkipLast ($num - $range[1]) # Trim links list
     # $links = $links[($start-1)..($end-1)] ## for PSVersion < 5.0
     $path = getDir # Get download directory
-
+    $downloads = get-download-link $links $path $server $params # parse downloads list
     # Let's rock!
-    foreach ($line in $links) {
-        $line = $line.Line.trimstart("@{href=").trim("}")
-        $filename = ($line.split("/")[5]).Trim()
-        $location = Join-Path -Path "$path" -ChildPath "$filename"
-        $file2 = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
-        $address = ($file2.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
-        cmd /c .\msdl.exe -s2 $address -o $location '2>&1' | parseMSDL
+    foreach ($Job in $downloads) {
+        start-download $Job
     }
+}
+function start-download ($Job) {
+    $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $ProcessInfo.FileName = (Resolve-Path ".\msdl.exe").Path
+    $ProcessInfo.RedirectStandardError = $false
+    $ProcessInfo.RedirectStandardOutput = $false
+    $ProcessInfo.UseShellExecute = $false
+    $ProcessInfo.Arguments = "-s2 '$($Job[0])' -o '$($Job[1])'"
+    $Process = New-Object System.Diagnostics.Process
+    $Process.StartInfo = $ProcessInfo
+    $Process.Start() | Out-Null
+    do {
+        $Process.StandardError.ReadLine() # | parseMSDL
+    } while (!$process.HasExited)
+    $Process.WaitForExit()
 }
 
 function forceResolvePath {
@@ -61,6 +71,20 @@ function parseMSDL {
             Write-Host "$_"
         }
     }
+}
+
+function get-download-link ([array]$links, [string]$path, $server, $params) {
+    # results is an array of (address, location) pairs, with address being a downlopad link, and location being "path\filename.wmv"
+    $results = @()
+    foreach ($line in $links) {
+        $line = $line.Line.trimstart("@{href=").trim("}")
+        $filename = ($line.split("/")[5]).Trim()
+        $location = Join-Path -Path "$path" -ChildPath "$filename"
+        $file2 = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
+        $address = ($file2.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
+        $results += , @($address, $location)
+    }
+    $results
 }
 
 function readDefault ([string]$prompt, $default) {
@@ -140,7 +164,7 @@ function getRawPassword ($SecurePassword) {
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
     $pass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
     [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
-	return $pass
+    return $pass
 }
 
 function testMSDL {
@@ -196,7 +220,7 @@ function getInRange ([int]$low = 1, [int]$high, [int]$def) {
 }
 
 function printIntro {
-    Write-Host "Technion Old Video Server Downloader v0.6 by Ran Lottem"
+    Write-Host "Technion Old Video Server Downloader v0.7 by Ran Lottem"
     Write-Host "Based on bash script by Ohad Eytan`n"
 }
 
