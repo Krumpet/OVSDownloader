@@ -7,18 +7,17 @@ $defaultDir = "."
 <# Functions #>
 function main {
     printIntro # Greetings
-    testMSDL # Check dependency
+    checkDependencies # Check necessary files
     $params = getCred # Get user credentials
     $Course = getCourse # Get Course address
     $links = getLinks $Course $params # Get links
     $num = ($links | Measure-Object).count # Get amount of links
     $range = getRange $num # Get range of downloads
-    $links = $links | Select-Object -Skip ($range[0] - 1) | Select-Object -SkipLast ($num - $range[1]) # Trim links list
-    # $links = $links[($start-1)..($end-1)] ## for PSVersion < 5.0
     $path = getDir # Get download directory
-    $downloads = get-download-link $links $path $server $params # parse downloads list
+    
     # Let's rock!
-    foreach ($Job in $downloads) {
+    $range[0]..$range[1] | ForEach-Object {
+        $Job = get-download-link $links $path $server $params $_
         start-download $Job
     }
 }
@@ -33,7 +32,7 @@ function start-download ($Job) {
     $Process.StartInfo = $ProcessInfo
     $Process.Start() | Out-Null
     do {
-        $Process.StandardError.ReadLine() # | parseMSDL
+        $Process.StandardError.ReadLine()
     } while (!$process.HasExited)
     $Process.WaitForExit()
 }
@@ -54,37 +53,16 @@ function forceResolvePath {
     return $FileName
 }
 
-function parseMSDL {
-    Process {
-        $first = 1
-        $newline = 0
-        if ($_.startswith("DL")) {
-            Write-Host -NoNewline "`r$_"
-            $first = 0
-            $newline = 0
-        }
-        else {
-            if ((-not $first) -and (-not $newline)) {
-                Write-Host "" # for newline between files
-                $newline = 1
-            }
-            Write-Host "$_"
-        }
-    }
-}
-
-function get-download-link ([array]$links, [string]$path, $server, $params) {
-    # results is an array of (address, location) pairs, with address being a downlopad link, and location being "path\filename.wmv"
-    $results = @()
-    foreach ($line in $links) {
-        $line = $line.Line.trimstart("@{href=").trim("}")
-        $filename = ($line.split("/")[5]).Trim()
-        $location = Join-Path -Path "$path" -ChildPath "$filename"
-        $file2 = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
-        $address = ($file2.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
-        $results += , @($address, $location)
-    }
-    $results
+function get-download-link ([array]$links, [string]$path, $server, $params, $index) {
+    $line = $links[$($index-1)]
+    $line = $line.Line.trimstart("@{href=").trim("}")
+    $filename = ($line.split("/")[5]).Trim()
+    $filename = (Get-Culture).textinfo.ToTitleCase((($filename.ToLower() -replace "%20", " ").split("."))[0]) + "." + $filename.split(".")[1].ToLower()
+    $filename = $filename -replace "-", " "
+    $location = Join-Path -Path "$path" -ChildPath "$filename"
+    $file = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
+    $address = ($file.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
+    @($address,$location)
 }
 
 function readDefault ([string]$prompt, $default) {
@@ -143,7 +121,7 @@ function getDir {
 
 function getCred {
     if (-not (Test-Path ".\params.txt")) {
-        # Get user input
+        # params.txt doesn't exist, get user input
         Write-Host "params.txt not found. It will be created from your username & password."
         $User = Read-Host -Prompt "Please insert username (e.g ran.lottem without @campus etc.)"
         $Pass = Read-Host -assecurestring -Prompt "Please insert password" | ConvertFrom-SecureString
@@ -151,8 +129,8 @@ function getCred {
         Add-Content ".\params.txt" "password = $Pass"
     }
     else {
-        # param.txt exists
-        Write-Host "Loading username & password from params.txt"
+        # params.txt exists
+        Write-Host "Loading username & password from params.txt`n"
     }
     $hash = Get-Content -Raw ".\params.txt" | ConvertFrom-StringData
     $securePass = ConvertTo-SecureString -String $hash["password"]
@@ -160,11 +138,16 @@ function getCred {
     return $hash
 }
 
-function getRawPassword ($SecurePassword) {
+function getRawPassword ([SecureString] $SecurePassword) {
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
     $pass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
     [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
     return $pass
+}
+
+function checkDependencies {
+    testMSDL
+    testCygwin
 }
 
 function testMSDL {
@@ -173,6 +156,13 @@ function testMSDL {
     }
     catch {
         Write-Host "Error: msdl.exe not found in this script's folder. Exiting."
+        exit
+    }
+}
+
+function testCygwin {
+    if (-not(Test-Path cygwin1.dll)) {
+        Write-Host "Error: cygwin1.dll not found. Exiting."
         exit
     }
 }
@@ -220,7 +210,7 @@ function getInRange ([int]$low = 1, [int]$high, [int]$def) {
 }
 
 function printIntro {
-    Write-Host "Technion Old Video Server Downloader v0.7 by Ran Lottem"
+    Write-Host "Technion Old Video Server Downloader v0.8 by Ran Lottem"
     Write-Host "Based on bash script by Ohad Eytan`n"
 }
 
