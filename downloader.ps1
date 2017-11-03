@@ -4,6 +4,15 @@ $ErrorActionPreference = "silentlycontinue" # For errors with Invoke-Webrequest
 $server = "https://video.technion.ac.il" # Technion video server
 $defaultDir = "."
 
+$exitModes = @{
+    "Success"       = @(0, "All files complete");
+    "DirError"      = @(1, "Could not create directory");
+    "CredError"     = @(2, "bad username or password");
+    "MSDLError"     = @(3, "msdl.exe not found");
+    "CygwinError"   = @(4, "cygwin1.dll not found");
+    "NoFilesError"  = @(5, "no files found");
+}
+
 <# Functions #>
 function main {
     printIntro # Greetings
@@ -20,12 +29,11 @@ function main {
         $Job = get-download-link $links $path $server $params $_
         start-download $Job
     }
+    exit-script $exitModes["Success"]
 }
 function start-download ($Job) {
     $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
     $ProcessInfo.FileName = (Resolve-Path ".\msdl.exe").Path
-    $ProcessInfo.RedirectStandardError = $false
-    $ProcessInfo.RedirectStandardOutput = $false
     $ProcessInfo.UseShellExecute = $false
     $ProcessInfo.Arguments = "-s2 '$($Job[0])' -o '$($Job[1])'"
     $Process = New-Object System.Diagnostics.Process
@@ -54,15 +62,22 @@ function forceResolvePath {
 }
 
 function get-download-link ([array]$links, [string]$path, $server, $params, $index) {
-    $line = $links[$($index-1)]
-    $line = $line.Line.trimstart("@{href=").trim("}")
-    $filename = ($line.split("/")[5]).Trim()
+    $line = $links[$($index-1)].Line.trimstart("@{href=").trim("}")
+    # $line = $line.Line.trimstart("@{href=").trim("}")
+    $filename = format-Filename $line <#($line.split("/")[5]).Trim()
     $filename = (Get-Culture).textinfo.ToTitleCase((($filename.ToLower() -replace "%20", " ").split("."))[0]) + "." + $filename.split(".")[1].ToLower()
-    $filename = $filename -replace "-", " "
+    $filename = $filename -replace "-", " " #>
     $location = Join-Path -Path "$path" -ChildPath "$filename"
     $file = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
     $address = ($file.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
     @($address,$location)
+}
+
+function format-Filename ($line) {
+    $result = ($line.split("/")[5]).Trim()
+    $result = (Get-Culture).textinfo.ToTitleCase((($result.ToLower() -replace "%20", " ").split("."))[0]) + "." + $result.split(".")[1].ToLower()
+    $result = $result -replace "-", " "
+    $result
 }
 
 function readDefault ([string]$prompt, $default) {
@@ -92,6 +107,15 @@ function getCourse {
     return $Course
 }
 
+function exit-script ([array]$reason) {
+    $message = $($reason[1])
+    if ($reason[0] -ne 0) {
+        $message = "Error: " + $message
+    }
+    "$message. Exiting with code $($reason[0])."
+    exit $reason[0]
+}
+
 function getDir {
     do {
         $path = getPath # path name legality check
@@ -110,8 +134,7 @@ function getDir {
                 Write-Host "Creating folder $path"
                 New-Item -ItemType Directory -Force -Path $path | Out-Null
                 if (-not $?) {
-                    Write-Host "Error: Could not create directory $path"
-                    exit
+                    exit-script $exitModes["DirError"]
                 }
             } 
         }
@@ -155,15 +178,13 @@ function testMSDL {
         & .\msdl.exe -qh
     }
     catch {
-        Write-Host "Error: msdl.exe not found in this script's folder. Exiting."
-        exit
+        exit-script $exitModes["MSDLError"]
     }
 }
 
 function testCygwin {
     if (-not(Test-Path cygwin1.dll)) {
-        Write-Host "Error: cygwin1.dll not found. Exiting."
-        exit
+        exit-script $exitModes["CygwinError"]
     }
 }
 
@@ -172,17 +193,19 @@ function getLinks ($Course, $params) {
 
     # Check URL
     if (($URL.links[0].innerHTML) -Match "forgot") {
-        Write-Host "Error: bad username or password, please try again."
         Remove-Item -Path ".\params.txt"
-        exit
+        exit-script $exitModes["CredError"]
+        # Write-Host "Error: bad username or password, please try again."
+        # exit
     }
     return $URL.Links | Select-Object href | Select-String movies/rtsp
 }
 
 function getRange ([int]$num) {
     if ($num -le 0) {
-        Write-Host "Error: no files found."
-        exit
+        exit-script $exitModes["NoFilesError"]
+        # Write-Host "Error: no files found."
+        # exit
     }
 
     # Get file range for download
@@ -210,7 +233,7 @@ function getInRange ([int]$low = 1, [int]$high, [int]$def) {
 }
 
 function printIntro {
-    Write-Host "Technion Old Video Server Downloader v0.8 by Ran Lottem"
+    Write-Host "Technion Old Video Server Downloader v0.8.1 by Ran Lottem"
     Write-Host "Based on bash script by Ohad Eytan`n"
 }
 
