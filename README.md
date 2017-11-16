@@ -52,3 +52,6 @@ at ik.PowerShell.PS2EXE.Main(String[] args)'
 This has something to do with Windows Management Framework, please download the latest version from Microsoft. Version 5.1 is here: https://www.microsoft.com/en-us/download/details.aspx?id=54616
 
 Retry downloader.exe after installing the above.
+
+* Error when downloading any files:
+msdl.exe doesn't work with Hebrew in folder names, as far as I can tell. Please try to save to a folder without Hebrew in its path.
