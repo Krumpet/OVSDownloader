@@ -3,14 +3,15 @@ $progressPreference = 'silentlyContinue' # For Invoke-Webrequest not to bother t
 $ErrorActionPreference = "silentlycontinue" # For errors with Invoke-Webrequest
 $server = "https://video.technion.ac.il" # Technion video server
 $defaultDir = "."
+$version = "0.8.2"
 
 $exitModes = @{
     "Success"       = @(0, "All files complete");
     "DirError"      = @(1, "Could not create directory");
-    "CredError"     = @(2, "bad username or password");
+    "CredError"     = @(2, "Bad username or password");
     "MSDLError"     = @(3, "msdl.exe not found");
     "CygwinError"   = @(4, "cygwin1.dll not found");
-    "NoFilesError"  = @(5, "no files found");
+    "NoFilesError"  = @(5, "No files found");
 }
 
 <# Functions #>
@@ -63,21 +64,20 @@ function forceResolvePath {
 
 function get-download-link ([array]$links, [string]$path, $server, $params, $index) {
     $line = $links[$($index-1)].Line.trimstart("@{href=").trim("}")
-    # $line = $line.Line.trimstart("@{href=").trim("}")
-    $filename = format-Filename $line <#($line.split("/")[5]).Trim()
-    $filename = (Get-Culture).textinfo.ToTitleCase((($filename.ToLower() -replace "%20", " ").split("."))[0]) + "." + $filename.split(".")[1].ToLower()
-    $filename = $filename -replace "-", " " #>
+    $filename = format-Filename $line
     $location = Join-Path -Path "$path" -ChildPath "$filename"
     $file = Invoke-WebRequest -uri "$server$line" -Method POST -Body $params
     $address = ($file.Content.Split("`n") | Select-String -Pattern "window.location=").Line.split("`"")[1]
-    @($address,$location)
+    return @($address,$location)
 }
 
 function format-Filename ($line) {
     $result = ($line.split("/")[5]).Trim()
-    $result = (Get-Culture).textinfo.ToTitleCase((($result.ToLower() -replace "%20", " ").split("."))[0]) + "." + $result.split(".")[1].ToLower()
-    $result = $result -replace "-", " "
-    $result
+    $filename = (Get-Culture).textinfo.ToTitleCase($result.split(".")[0].ToLower())
+    $suffix = $result.split(".")[1].ToLower()
+    $result = $filename + "." + $suffix
+    $result = $result -replace "%20", " " -replace "-", " "
+    return $result
 }
 
 function readDefault ([string]$prompt, $default) {
@@ -112,7 +112,8 @@ function exit-script ([array]$reason) {
     if ($reason[0] -ne 0) {
         $message = "Error: " + $message
     }
-    "$message. Exiting with code $($reason[0])."
+    "$message. Exiting with code $($reason[0]), press any key. . ."
+    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit $reason[0]
 }
 
@@ -190,13 +191,9 @@ function testCygwin {
 
 function getLinks ($Course, $params) {
     $URL = Invoke-WebRequest $Course -Method POST -Body $params
-
-    # Check URL
     if (($URL.links[0].innerHTML) -Match "forgot") {
         Remove-Item -Path ".\params.txt"
         exit-script $exitModes["CredError"]
-        # Write-Host "Error: bad username or password, please try again."
-        # exit
     }
     return $URL.Links | Select-Object href | Select-String movies/rtsp
 }
@@ -204,26 +201,18 @@ function getLinks ($Course, $params) {
 function getRange ([int]$num) {
     if ($num -le 0) {
         exit-script $exitModes["NoFilesError"]
-        # Write-Host "Error: no files found."
-        # exit
     }
-
-    # Get file range for download
     Write-Host "There are $num files."
-
-    Write-Host "Please choose range of videos to download. Start video:"
-    [int]$start = getInRange 1 $num 1
-
-    Write-Host "End video:"
-    [int]$end = getInRange $start $num $num
+    Write-Host "Please choose range of videos to download."
+    [int]$start = getInRange 1 $num 1 "first"
+    [int]$end = getInRange $start $num $num "last"
 
     $start
     $end
-    return
 }
 
-function getInRange ([int]$low = 1, [int]$high, [int]$def) {
-    $prompt = "Please choose video number ($low-$high)"
+function getInRange ([int]$low = 1, [int]$high, [int]$def, [string]$index) {
+    $prompt = "Please choose $index video number ($low-$high)"
     [int]$res = readDefault $prompt $def
     while (($res -lt $low) -or ($res -gt $high)) {
         Write-Host "Invalid choice."
@@ -233,7 +222,7 @@ function getInRange ([int]$low = 1, [int]$high, [int]$def) {
 }
 
 function printIntro {
-    Write-Host "Technion Old Video Server Downloader v0.8.1 by Ran Lottem"
+    Write-Host "Technion Old Video Server Downloader v$version by Ran Lottem"
     Write-Host "Based on bash script by Ohad Eytan`n"
 }
 
