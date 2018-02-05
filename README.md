@@ -1,5 +1,11 @@
 ﻿# OVSDownloader
  
+-----------
+ THIS PROJECT IS DEPRECATED. PLEASE SEE:
+https://github.com/Krumpet/OVSDownloader-GUI
+INSTEAD
+-----------
+ 
  TL;DR:
  1) Download OVSdownloader.zip
  2) Extract msdl.exe, downloader.exe, and cygwin1.dll
